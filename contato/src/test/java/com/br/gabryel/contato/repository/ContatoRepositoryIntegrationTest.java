@@ -35,7 +35,7 @@ public class ContatoRepositoryIntegrationTest {
 
 		this.contato.setTelefone(null);
 
-		assertThrows(DataIntegrityViolationException.class, () -> contatoRepository.save(this.contato));
+		assertThrows(DataIntegrityViolationException.class, () -> contatoRepository.save(this.contato), "O DDD deve ser preenchido");
 	}
 
 	@Test
@@ -43,7 +43,7 @@ public class ContatoRepositoryIntegrationTest {
 
 		this.contato.setDdd(null);
 
-		assertThrows(DataIntegrityViolationException.class, () -> contatoRepository.save(this.contato));
+		assertThrows(DataIntegrityViolationException.class, () -> contatoRepository.save(this.contato), "O Telefone deve ser preenchido");
 	}
 
 	@Test
@@ -51,7 +51,7 @@ public class ContatoRepositoryIntegrationTest {
 
 		this.contato.setNome(null);
 
-		assertThrows(DataIntegrityViolationException.class, () -> contatoRepository.save(this.contato));
+		assertThrows(DataIntegrityViolationException.class, () -> contatoRepository.save(this.contato), "O Nome deve ser preenchido");
 	}
 
 	@Test
