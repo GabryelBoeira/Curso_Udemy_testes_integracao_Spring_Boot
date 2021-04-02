@@ -20,8 +20,7 @@ public class ContatoServiceImpl implements ContatoService {
 	@Override
 	public void inserir(Contato contato) throws ContatoException {
 
-		try {
-			
+		try {			
 			contatoRepository.save(contato);
 		} catch (Exception e) {
 			throw new ContatoException(e);

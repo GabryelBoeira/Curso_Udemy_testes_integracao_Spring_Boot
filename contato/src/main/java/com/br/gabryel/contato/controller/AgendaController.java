@@ -11,15 +11,13 @@ import com.br.gabryel.contato.service.ContatoService;
 public class AgendaController {
 	
 	@Autowired 
-	ContatoService contatoService;	
+	private ContatoService contatoService;	
 	
-	private void inserirRegistro(String nome, String ddd, String telefone) throws ContatoException {
-	
-		Contato contato = new Contato(ddd, telefone, nome);
+	public void inserirRegistro(Contato contato) throws ContatoException {	
 		contatoService.inserir(contato);
 	}
 	
-	private void removerRegistro(Long id) {
+	public void removerRegistro(Long id) {
 		
 		contatoService.remover(id);
 	}
