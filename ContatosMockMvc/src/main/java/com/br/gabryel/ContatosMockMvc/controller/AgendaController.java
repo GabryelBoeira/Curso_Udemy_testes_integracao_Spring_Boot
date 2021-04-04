@@ -1,7 +1,6 @@
 package com.br.gabryel.ContatosMockMvc.controller;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Positive;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -18,7 +17,7 @@ import com.br.gabryel.ContatosMockMvc.model.Contato;
 import com.br.gabryel.ContatosMockMvc.servive.ContatoService;
 
 @Controller
-@RequestMapping
+@RequestMapping("/agenda")
 public class AgendaController {
 	
 	@Autowired
@@ -27,7 +26,7 @@ public class AgendaController {
 	@GetMapping("/")
 	public ModelAndView getContatos(ModelAndView mav) {
 		
-		mav.addObject("contatoList", contatoService.buscarContatos());
+		mav.addObject("contatos", contatoService.buscarContatos());
 		return mav;
 	}
 	
