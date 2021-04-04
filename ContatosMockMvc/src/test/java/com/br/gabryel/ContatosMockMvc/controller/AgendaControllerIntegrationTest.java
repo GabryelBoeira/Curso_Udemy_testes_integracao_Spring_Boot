@@ -1,5 +1,10 @@
 package com.br.gabryel.ContatosMockMvc.controller;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+
 import javax.transaction.Transactional;
 
 import org.hamcrest.Matcher;
@@ -13,13 +18,16 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.context.annotation.Description;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
 import org.springframework.test.web.servlet.result.ModelResultMatchers;
 import org.springframework.test.web.servlet.result.StatusResultMatchers;
 import org.springframework.test.web.servlet.result.ViewResultMatchers;
+import org.springframework.web.servlet.ModelAndView;
 
 import com.br.gabryel.ContatosMockMvc.model.Contato;
 
@@ -57,8 +65,11 @@ public class AgendaControllerIntegrationTest {
 		resultActions.andExpect(MockMvcResultMatchers.status().isOk());
 	}
 
+	/************* Utilizando MockMvcResultMatchers ************************/
+
 	@Test
-	public void verificarStatusRequsicao() throws Exception {
+	@Description("utilizando MockMvcResultMatchers ")
+	public void verificarStatusRequsicaoMockMvcResultMatchers() throws Exception {
 
 		ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get("/agenda/"));
 		StatusResultMatchers statusResult = MockMvcResultMatchers.status();
@@ -71,7 +82,8 @@ public class AgendaControllerIntegrationTest {
 	}
 
 	@Test
-	public void verificarViewRequisicao() throws Exception {
+	@Description("utilizando MockMvcResultMatchers ")
+	public void verificarViewRequisicaoMockMvcResultMatchers() throws Exception {
 
 		ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get("/agenda/"));
 		ViewResultMatchers viewResult = MockMvcResultMatchers.view();
@@ -82,7 +94,8 @@ public class AgendaControllerIntegrationTest {
 	}
 
 	@Test
-	public void verificarResultadoRequisicao() throws Exception {
+	@Description("utilizando MockMvcResultMatchers ")
+	public void verificarResultadoRequisicaoMockMvcResultMatchers() throws Exception {
 
 		ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get("/agenda/"));
 		ModelResultMatchers modelResult = MockMvcResultMatchers.model();
@@ -99,4 +112,45 @@ public class AgendaControllerIntegrationTest {
 
 	}
 
+	/************* Utilizando MockMvcResultHandlers ************************/
+
+	@Test
+	@Description("utilizando MockMvcResultHandlers")
+	public void verificarStatusRequsicaoMockMvcResultHandlers() throws Exception {
+
+		ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get("/agenda/"));
+		resultActions.andDo(MockMvcResultHandlers.print());
+
+		Integer status = resultActions.andReturn().getResponse().getStatus();
+
+		assertEquals(200, status);
+	}
+
+	@Test
+	@Description("utilizando MockMvcResultHandlers ")
+	public void verificarViewRequisicaoMockMvcResultHandlers() throws Exception {
+
+		ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get("/agenda/"));
+		resultActions.andDo(MockMvcResultHandlers.print());
+
+		ModelAndView mav = resultActions.andReturn().getModelAndView();
+
+		assertEquals("agenda", mav.getViewName());
+	}
+
+	@Test
+	@Description("utilizando MockMvcResultHandlers ")
+	public void verificarResultadoRequisicaoMockMvcResultHandlers() throws Exception {
+
+		ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get("/agenda/"));
+		resultActions.andDo(MockMvcResultHandlers.print());
+		
+		ModelAndView mav = resultActions.andReturn().getModelAndView();
+
+		@SuppressWarnings("unchecked")
+		List<Contato> contatos = (List<Contato>) mav.getModel().get("contatos");
+		
+		assertEquals(1, contatos.size());
+		assertTrue(contatos.contains(contato));
+	}
 }
