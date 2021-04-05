@@ -1,6 +1,7 @@
 package com.br.contato.testRestTemplate.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -14,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -57,8 +59,9 @@ public class AgendaControllerIntegrationTest {
 		assertEquals(HttpStatus.OK, resposta.getStatusCode());
 	}
 
-	/*** Utiliznado o metodo testRestTemplate.exchange Forma Generica ***/
+	/*** Utilizando o métodos testRestTemplate.exchange Forma Generica ***/
 
+	// Forma Generica de requição para tipo GET
 	@Test
 	public void deveMostrarTodosContatosUsandoStringExchange() {
 		ResponseEntity<String> resposta = testRestTemplate.exchange("/agenda/", HttpMethod.GET, null, String.class);
@@ -105,7 +108,38 @@ public class AgendaControllerIntegrationTest {
 		assertNull(resposta.getBody());
 	}
 
-	/*** Utiliznado metodos mais específicos para Requisições do tipo GET ***/
+	// Forma Generica de requição para tipo POST
+	@Test
+	public void salvarContatoDeveRetornarMensagemDeErro() {
+		Contato contato = new Contato(nome, null, null);
+		HttpEntity<Contato> httpEntity = new HttpEntity<>(contato);
+		ResponseEntity<List<String>> resposta = testRestTemplate.exchange("/agenda/inserir", HttpMethod.POST,
+				httpEntity, new ParameterizedTypeReference<List<String>>() {
+				});
+
+		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
+		assertTrue(resposta.getBody().contains("O DDD deve ser preenchido"));
+		assertTrue(resposta.getBody().contains("O Telefone deve ser preenchido"));
+	}
+
+	@Test
+	public void inserirDeveSalvarContato() {
+		Contato contato = new Contato(nome, ddd, telefone);
+		HttpEntity<Contato> httpEntity = new HttpEntity<>(contato);
+		ResponseEntity<Contato> resposta = testRestTemplate.exchange("/agenda/inserir", HttpMethod.POST, httpEntity,
+				Contato.class);
+		assertEquals(HttpStatus.CREATED, resposta.getStatusCode());
+
+		Contato resultado = resposta.getBody();
+
+		assertNotNull(resultado.getId());
+		assertEquals(contato.getNome(), resultado.getNome());
+		assertEquals(contato.getDdd(), resultado.getDdd());
+		assertEquals(contato.getTelefone(), resultado.getTelefone());
+		contatoRepository.deleteAll();
+	}
+
+	/*** Utilizando métodos mais específicos para Requisições do tipo GET ***/
 
 	@Test
 	public void deveMostrarUmContatoComGetForEntity() {
@@ -135,6 +169,36 @@ public class AgendaControllerIntegrationTest {
 	public void buscaUmContatoDeveRetornarNaoEncontradogetForObject() {
 		Contato resposta = testRestTemplate.getForObject("/agenda/contato/{id}", Contato.class, 100);
 		assertNull(resposta);
+	}
+
+	/*** Utilizando métodos mais específicos para Requisições do tipo POST ***/
+
+	@Test
+	public void inserirDeveSalvarContatoComPostForEntity() {
+		Contato contato = new Contato(nome, ddd, telefone);
+		HttpEntity<Contato> httpEntity = new HttpEntity<>(contato);
+		ResponseEntity<Contato> resposta = testRestTemplate.postForEntity("/agenda/inserir", httpEntity, Contato.class);
+
+		assertEquals(HttpStatus.CREATED, resposta.getStatusCode());
+		Contato resultado = resposta.getBody();
+		assertNotNull(resultado.getId());
+		assertEquals(contato.getNome(), resultado.getNome());
+		assertEquals(contato.getDdd(), resultado.getDdd());
+		assertEquals(contato.getTelefone(), resultado.getTelefone());
+		contatoRepository.deleteAll();
+	}
+
+	@Test
+	public void inserirContatoDeveSalvarContatoPostForObject() {
+		Contato contato = new Contato(nome, ddd, telefone);
+		HttpEntity<Contato> httpEntity = new HttpEntity<>(contato);
+		Contato resposta = testRestTemplate.postForObject("/agenda/inserir", httpEntity, Contato.class);
+
+		assertNotNull(resposta.getId());
+		assertEquals(contato.getNome(), resposta.getNome());
+		assertEquals(contato.getDdd(), resposta.getDdd());
+		assertEquals(contato.getTelefone(), resposta.getTelefone());
+		contatoRepository.deleteAll();
 	}
 
 }
