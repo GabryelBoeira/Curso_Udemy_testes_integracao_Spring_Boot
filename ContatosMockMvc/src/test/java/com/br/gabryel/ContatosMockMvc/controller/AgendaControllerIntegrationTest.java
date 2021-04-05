@@ -1,13 +1,21 @@
 package com.br.gabryel.ContatosMockMvc.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 import java.util.List;
 
+import javax.persistence.Query;
 import javax.transaction.Transactional;
 
-import org.hamcrest.Matcher;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -144,13 +152,60 @@ public class AgendaControllerIntegrationTest {
 
 		ResultActions resultActions = mockMvc.perform(MockMvcRequestBuilders.get("/agenda/"));
 		resultActions.andDo(MockMvcResultHandlers.print());
-		
+
 		ModelAndView mav = resultActions.andReturn().getModelAndView();
 
 		@SuppressWarnings("unchecked")
 		List<Contato> contatos = (List<Contato>) mav.getModel().get("contatos");
-		
+
 		assertEquals(1, contatos.size());
 		assertTrue(contatos.contains(contato));
 	}
+
+	/*************
+	 * Utilizando Todos os conseitos anteriores juntos
+	 ************************/
+
+	@Test
+	public void deveMostrarTodosOsContatosFormaStatic() throws Exception {
+
+		mockMvc.perform(get("/agenda/")).andExpect(status().isOk()).andExpect(view().name("agenda"))
+				.andExpect(model().attribute("contatos", Matchers.hasSize(1)))
+				.andExpect(model().attribute("contatos",
+						Matchers.hasItem(Matchers.allOf(Matchers.hasProperty("id", Matchers.is(contato.getId())),
+								Matchers.hasProperty("nome", Matchers.is(contato.getNome())),
+								Matchers.hasProperty("ddd", Matchers.is(contato.getDdd())),
+								Matchers.hasProperty("telefone", Matchers.is(contato.getTelefone()))))))
+				.andDo(print());
+	}
+
+	@Test
+	public void deveMostrarUmContato() throws Exception {
+
+		// Buscando objeto persistindo  anteriormente 
+		Query queryContato = testEntityManager.getEntityManager().createQuery("SELECT c FROM Contato c");
+		Contato resultContato = (Contato) queryContato.getResultList().get(0);
+
+		mockMvc.perform(get("/agenda/contato/{id}", resultContato.getId())).andExpect(status().isOk())
+				.andExpect(view().name("agenda/contato"))
+				.andExpect(model().attribute("contato", Matchers.any(Contato.class)))
+				.andExpect(model().attribute("contato", contato)).andDo(print());
+	}
+
+	@Test
+	public void removerDeveExcluirContato() throws Exception {
+		
+		// Buscando objeto persistindo  anteriormente 
+		Query queryContato = testEntityManager.getEntityManager().createQuery("SELECT c FROM Contato c");
+		Contato resultContato = (Contato) queryContato.getResultList().get(0);
+		
+		mockMvc.perform(delete("/agenda/remover/{id}", resultContato.getId())).andExpect(status().is3xxRedirection())
+				.andExpect(view().name("redirect:agenda/"))
+				.andExpect(flash().attribute("successMessage", "Contato removido com sucesso")).andDo(print());
+
+		Query query = testEntityManager.getEntityManager().createQuery("SELECT c FROM Contato c");
+		
+		assertThrows(IndexOutOfBoundsException.class, () -> query.getResultList().get(0));
+	}
+
 }

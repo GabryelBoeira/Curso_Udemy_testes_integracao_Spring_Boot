@@ -42,7 +42,7 @@ public class AgendaController {
 	public ModelAndView deleteContato(@PathVariable("id") Long id, final RedirectAttributes redirectAttributes) {
 		
 		contatoService.remover(id);
-		redirectAttributes.addFlashAttribute("successMessage", "Contao Removido com sucesso");
+		redirectAttributes.addFlashAttribute("successMessage", "Contato removido com sucesso");
 		return new ModelAndView("redirect:agenda/");
 	}
 	
