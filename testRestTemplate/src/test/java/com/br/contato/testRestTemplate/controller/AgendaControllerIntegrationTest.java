@@ -52,45 +52,43 @@ public class AgendaControllerIntegrationTest {
 
 	@Test
 	public void deveMostrarTodosContatos() {
-		
-		ResponseEntity<String> resposta = testRestTemplate.exchange("/agenda/",HttpMethod.GET,null, String.class);
+
+		ResponseEntity<String> resposta = testRestTemplate.exchange("/agenda/", HttpMethod.GET, null, String.class);
 		assertEquals(HttpStatus.OK, resposta.getStatusCode());
 	}
-	
-	/*** Utiliznado o metodo testRestTemplate.exchange ***/
+
+	/*** Utiliznado o metodo testRestTemplate.exchange Forma Generica ***/
 
 	@Test
 	public void deveMostrarTodosContatosUsandoStringExchange() {
-		ResponseEntity<String> resposta =
-				testRestTemplate.exchange("/agenda/",HttpMethod.GET, null, String.class);
+		ResponseEntity<String> resposta = testRestTemplate.exchange("/agenda/", HttpMethod.GET, null, String.class);
 
 		assertEquals(HttpStatus.OK, resposta.getStatusCode());
 		assertTrue(resposta.getHeaders().getContentType().equals(MediaType.APPLICATION_JSON));
 
-		String result = "[{\"id\":"+contato.getId()+",\"ddd\":\"0y\","
+		String result = "[{\"id\":" + contato.getId() + ",\"ddd\":\"0y\","
 				+ "\"telefone\":\"9xxxxxxx9\",\"nome\":\"Chefe\"}]";
 		assertEquals(result, resposta.getBody());
 	}
 
 	@Test
 	public void deveMostrarTodosContatosUsandoListExchange() {
-		ParameterizedTypeReference<List<Contato>> tipoRetorno =
-				new ParameterizedTypeReference<List<Contato>>() {};
+		ParameterizedTypeReference<List<Contato>> tipoRetorno = new ParameterizedTypeReference<List<Contato>>() {
+		};
 
-				ResponseEntity<List<Contato>> resposta =
-						testRestTemplate.exchange("/agenda/",HttpMethod.GET,null, tipoRetorno);
+		ResponseEntity<List<Contato>> resposta = testRestTemplate.exchange("/agenda/", HttpMethod.GET, null,
+				tipoRetorno);
 
-				assertEquals(HttpStatus.OK, resposta.getStatusCode());
-				assertTrue(resposta.getHeaders().getContentType().equals(MediaType.APPLICATION_JSON));
-				assertEquals(1, resposta.getBody().size());
-				assertEquals(contato, resposta.getBody().get(0));
+		assertEquals(HttpStatus.OK, resposta.getStatusCode());
+		assertTrue(resposta.getHeaders().getContentType().equals(MediaType.APPLICATION_JSON));
+		assertEquals(1, resposta.getBody().size());
+		assertEquals(contato, resposta.getBody().get(0));
 	}
 
 	@Test
 	public void deveMostrarUmContatoExchange() {
-		ResponseEntity<Contato> resposta =
-				testRestTemplate.exchange("/agenda/contato/{id}",HttpMethod.GET,null
-						, Contato.class,contato.getId() );
+		ResponseEntity<Contato> resposta = testRestTemplate.exchange("/agenda/contato/{id}", HttpMethod.GET, null,
+				Contato.class, contato.getId());
 
 		assertEquals(HttpStatus.OK, resposta.getStatusCode());
 		assertTrue(resposta.getHeaders().getContentType().equals(MediaType.APPLICATION_JSON));
@@ -100,10 +98,43 @@ public class AgendaControllerIntegrationTest {
 	@Test
 	public void buscaUmContatoDeveRetornarNaoEncontradoExchange() {
 
-		ResponseEntity<Contato> resposta =
-				testRestTemplate.exchange("/agenda/contato/{id}",HttpMethod.GET,null, Contato.class,100 );
+		ResponseEntity<Contato> resposta = testRestTemplate.exchange("/agenda/contato/{id}", HttpMethod.GET, null,
+				Contato.class, 100);
 
 		assertEquals(HttpStatus.NOT_FOUND, resposta.getStatusCode());
 		assertNull(resposta.getBody());
 	}
+
+	/*** Utiliznado metodos mais específicos para Requisições do tipo GET ***/
+
+	@Test
+	public void deveMostrarUmContatoComGetForEntity() {
+		ResponseEntity<Contato> resposta = testRestTemplate.getForEntity("/agenda/contato/{id}", Contato.class,
+				contato.getId());
+
+		assertEquals(HttpStatus.OK, resposta.getStatusCode());
+		assertTrue(resposta.getHeaders().getContentType().equals(MediaType.APPLICATION_JSON));
+		assertEquals(contato, resposta.getBody());
+	}
+
+	@Test
+	public void deveMostrarUmContatoComGetForObject() {
+		Contato resposta = testRestTemplate.getForObject("/agenda/contato/{id}", Contato.class, contato.getId());
+		assertEquals(contato, resposta);
+	}
+
+	@Test
+	public void buscaUmContatoDeveRetornarNaoEncontradoComGetForEntity() {
+		ResponseEntity<Contato> resposta = testRestTemplate.getForEntity("/agenda/contato/{id}", Contato.class, 100);
+
+		assertEquals(HttpStatus.NOT_FOUND, resposta.getStatusCode());
+		assertNull(resposta.getBody());
+	}
+
+	@Test
+	public void buscaUmContatoDeveRetornarNaoEncontradogetForObject() {
+		Contato resposta = testRestTemplate.getForObject("/agenda/contato/{id}", Contato.class, 100);
+		assertNull(resposta);
+	}
+
 }
