@@ -58,7 +58,7 @@ public class AgendaController {
 		
 		if(!bibBindingResult.hasErrors()) {
 			contatoService.inserir(contato);
-			mav.addObject("successMessage", "Contao adicionado com sucesso");
+			mav.addObject("successMessage", "Contato cadastrado com sucesso");
 		}
 		
 		return mav;		

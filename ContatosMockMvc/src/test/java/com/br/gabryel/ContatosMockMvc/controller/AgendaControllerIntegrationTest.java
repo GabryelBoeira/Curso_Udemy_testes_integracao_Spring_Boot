@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
@@ -120,7 +121,7 @@ public class AgendaControllerIntegrationTest {
 
 	}
 
-	/************* Utilizando MockMvcResultHandlers ************************/
+	/*** Utilizando MockMvcResultHandlers ***/
 
 	@Test
 	@Description("utilizando MockMvcResultHandlers")
@@ -162,9 +163,7 @@ public class AgendaControllerIntegrationTest {
 		assertTrue(contatos.contains(contato));
 	}
 
-	/*************
-	 * Utilizando Todos os conseitos anteriores juntos
-	 ************************/
+	/*** Utilizando Todos os conseitos anteriores juntos ***/
 
 	@Test
 	public void deveMostrarTodosOsContatosFormaStatic() throws Exception {
@@ -182,7 +181,7 @@ public class AgendaControllerIntegrationTest {
 	@Test
 	public void deveMostrarUmContato() throws Exception {
 
-		// Buscando objeto persistindo  anteriormente 
+		// Buscando objeto persistindo anteriormente
 		Query queryContato = testEntityManager.getEntityManager().createQuery("SELECT c FROM Contato c");
 		Contato resultContato = (Contato) queryContato.getResultList().get(0);
 
@@ -192,20 +191,76 @@ public class AgendaControllerIntegrationTest {
 				.andExpect(model().attribute("contato", contato)).andDo(print());
 	}
 
+	// teste para a remoção de contato
 	@Test
 	public void removerDeveExcluirContato() throws Exception {
-		
-		// Buscando objeto persistindo  anteriormente 
+
+		// Buscando objeto persistindo anteriormente
 		Query queryContato = testEntityManager.getEntityManager().createQuery("SELECT c FROM Contato c");
 		Contato resultContato = (Contato) queryContato.getResultList().get(0);
-		
+
 		mockMvc.perform(delete("/agenda/remover/{id}", resultContato.getId())).andExpect(status().is3xxRedirection())
 				.andExpect(view().name("redirect:agenda/"))
 				.andExpect(flash().attribute("successMessage", "Contato removido com sucesso")).andDo(print());
 
 		Query query = testEntityManager.getEntityManager().createQuery("SELECT c FROM Contato c");
-		
+
 		assertThrows(IndexOutOfBoundsException.class, () -> query.getResultList().get(0));
 	}
 
+	/***
+	 * Utilizando Todos os conseitos anteriores juntos para Realizar a persistencia
+	 * das informações
+	 ***/
+
+	private String nome = "Chefe";
+
+	private String ddd = "41";
+
+	private String telefone = "123451234";
+
+	@Test
+	public void inserirComDddNuloDeveRetornarUmErro() throws Exception {
+
+		mockMvc.perform(post("/agenda/inserir").param("telefone", telefone).param("nome", nome))
+				.andExpect(status().isOk()).andExpect(view().name("agenda/inserir"))
+				.andExpect(model().attribute("contato", Matchers.any(Contato.class)))
+				.andExpect(model().attributeHasFieldErrors("contato", "ddd"))
+				.andExpect(model().attributeHasFieldErrorCode("contato", "ddd", "NotBlank")).andDo(print());
+	}
+
+	@Test
+	public void inserirComTelefoneNuloDeveRetornarUmErro() throws Exception {
+
+		mockMvc.perform(post("/agenda/inserir").param("ddd", ddd).param("nome", nome)).andExpect(status().isOk())
+				.andExpect(view().name("agenda/inserir"))
+				.andExpect(model().attribute("contato", Matchers.any(Contato.class)))
+				.andExpect(model().attributeHasFieldErrors("contato", "telefone"))
+				.andExpect(model().attributeHasFieldErrorCode("contato", "telefone", "NotBlank")).andDo(print());
+	}
+
+	@Test
+	public void inserirComNomeNuloDeveRetornarUmErro() throws Exception {
+
+		mockMvc.perform(post("/agenda/inserir").param("ddd", ddd).param("telefone", telefone))
+				.andExpect(status().isOk()).andExpect(view().name("agenda/inserir"))
+				.andExpect(model().attribute("contato", Matchers.any(Contato.class)))
+				.andExpect(model().attributeHasFieldErrors("contato", "nome"))
+				.andExpect(model().attributeHasFieldErrorCode("contato", "nome", "NotBlank")).andDo(print());
+	}
+
+	@Test
+	public void inserirDeveSalvaContato() throws Exception {
+
+		// Limpar informações desnecessárias 
+		testEntityManager.getEntityManager().createQuery("DELETE FROM Contato").executeUpdate();
+
+		mockMvc.perform(post("/agenda/inserir").param("ddd", ddd).param("telefone", telefone).param("nome", nome))
+				.andExpect(status().isOk()).andExpect(view().name("agenda/inserir"))
+				.andExpect(model().attribute("contato", Matchers.any(Contato.class)))
+				.andExpect(model().attribute("successMessage", "Contato cadastrado com sucesso")).andDo(print());
+
+		Query query = testEntityManager.getEntityManager().createQuery("SELECT c FROM Contato c");
+		assertEquals(1, query.getResultList().size());
+	}
 }
