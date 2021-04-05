@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -110,7 +111,7 @@ public class AgendaControllerIntegrationTest {
 
 	// Forma Generica de requição para tipo POST
 	@Test
-	public void salvarContatoDeveRetornarMensagemDeErro() {
+	public void salvarContatoDeveRetornarMensagemDeErroExchange() {
 		Contato contato = new Contato(nome, null, null);
 		HttpEntity<Contato> httpEntity = new HttpEntity<>(contato);
 		ResponseEntity<List<String>> resposta = testRestTemplate.exchange("/agenda/inserir", HttpMethod.POST,
@@ -123,7 +124,7 @@ public class AgendaControllerIntegrationTest {
 	}
 
 	@Test
-	public void inserirDeveSalvarContato() {
+	public void inserirDeveSalvarContatoExchange() {
 		Contato contato = new Contato(nome, ddd, telefone);
 		HttpEntity<Contato> httpEntity = new HttpEntity<>(contato);
 		ResponseEntity<Contato> resposta = testRestTemplate.exchange("/agenda/inserir", HttpMethod.POST, httpEntity,
@@ -137,6 +138,46 @@ public class AgendaControllerIntegrationTest {
 		assertEquals(contato.getDdd(), resultado.getDdd());
 		assertEquals(contato.getTelefone(), resultado.getTelefone());
 		contatoRepository.deleteAll();
+	}
+
+	// Forma Generica de requição para tipo DELETE e PUT
+
+	@Test
+	public void alterarDeveRetornarMensagemDeErroExchange() {
+		contato.setDdd(null);
+		contato.setTelefone(null);
+		HttpEntity<Contato> httpEntity = new HttpEntity<>(contato);
+		ResponseEntity<List<String>> resposta = testRestTemplate.exchange("/agenda/alterar/{id}", HttpMethod.PUT,
+				httpEntity, new ParameterizedTypeReference<List<String>>() {
+				}, contato.getId());
+
+		assertEquals(HttpStatus.BAD_REQUEST, resposta.getStatusCode());
+		assertTrue(resposta.getBody().contains("O DDD deve ser preenchido"));
+		assertTrue(resposta.getBody().contains("O Telefone deve ser preenchido"));
+	}
+
+	@Test
+	public void alterarDeveAlterarContatoExchange() {
+		contato.setNome("Novo Chefe");
+		HttpEntity<Contato> httpEntity = new HttpEntity<>(contato);
+		ResponseEntity<Contato> resposta = testRestTemplate.exchange("/agenda/alterar/{id}", HttpMethod.PUT, httpEntity,
+				Contato.class, contato.getId());
+
+		assertEquals(HttpStatus.CREATED, resposta.getStatusCode());
+		Contato resultado = resposta.getBody();
+		assertEquals(contato.getId(), resultado.getId());
+		assertEquals(ddd, resultado.getDdd());
+		assertEquals(telefone, resultado.getTelefone());
+		assertEquals("Novo Chefe", resultado.getNome());
+	}
+
+	@Test
+	public void removerDeveExcluirContatoExchange() {
+		ResponseEntity<Contato> resposta = testRestTemplate.exchange("/agenda/remover/{id}", HttpMethod.DELETE, null,
+				Contato.class, contato.getId());
+
+		assertEquals(HttpStatus.NO_CONTENT, resposta.getStatusCode());
+		assertNull(resposta.getBody());
 	}
 
 	/*** Utilizando métodos mais específicos para Requisições do tipo GET ***/
@@ -201,4 +242,27 @@ public class AgendaControllerIntegrationTest {
 		contatoRepository.deleteAll();
 	}
 
+	/***
+	 * Utilizando métodos mais específicos para Requisições do tipo DELETE E PUT
+	 ***/
+
+	@Test
+	public void alterarDeveAlterarContatoComPut() {
+
+		contato.setNome("Novo Chefe");
+		testRestTemplate.put("/agenda/alterar/{id}", contato, contato.getId());
+
+		Contato resultado = contatoRepository.findById(contato.getId()).get();
+		assertEquals(ddd, resultado.getDdd());
+		assertEquals(telefone, resultado.getTelefone());
+		assertEquals("Novo Chefe", resultado.getNome());
+	}
+
+	@Test
+	public void removerDeveExcluirContatoComDelete() {
+		testRestTemplate.delete("/agenda/remover/" + contato.getId());
+
+		Optional<Contato> resultado = contatoRepository.findById(contato.getId());
+		assertEquals(Optional.empty(), resultado);
+	}
 }
